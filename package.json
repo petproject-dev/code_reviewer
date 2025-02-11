@@ -1,0 +1,29 @@
+{
+  "name": "code_reviewer",
+  "version": "0.0.1",
+  "main": "main.ts",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write .",
+    "lint": "prettier --check .",
+    "cli": "ts-node src/main.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@octokit/rest": "^19.0.7",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "minimatch": "^7.4.2",
+    "openai": "^3.2.1",
+    "parse-diff": "^0.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.74",
+    "prettier": "^2.8.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.2"
+  }
+}
