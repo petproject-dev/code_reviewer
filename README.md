@@ -1,13 +1,16 @@
 ## AI Code Review
 This is a helper package for automating code reviews. To run the script you need to create a .env file based on the .env.example file and add values ​​for the variables:
 - GITHUB_TOKEN - [Here](https://docs.github.com/ru/actions/security-for-github-actions/security-guides/automatic-token-authentication) you can find information how to generate it
-- OPENAI_API_KEY - If you don't it, sign up for an API key at [OpenAI](https://beta.openai.com/signup)
-- OPENAI_API_MODEL - All available models and prices [here](https://openai.com/api/pricing/)
+- OPENAI_API_KEY - If you don't have it, sign up for an API key at [OpenAI](https://beta.openai.com/signup)
+- OPENAI_API_MODEL - All available models and prices are [here](https://openai.com/api/pricing/)
+- GEMINI_API_KEY - If you don't have it, you can generate it [here](https://aistudio.google.com/app/apikey)
+- GEMINI_API_MODEL - All available models are [here](https://ai.google.dev/gemini-api/docs/models/gemini?hl=ru)
 
 ### How to run
 
 ```bash
-npm run cli review <pr_url>
+npm run cli review <pr_url> // this will use gemini by default
+npm run cli review <pr_url> -t gpt
 ```
 
 Example:

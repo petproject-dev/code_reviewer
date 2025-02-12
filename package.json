@@ -1,6 +1,6 @@
 {
   "name": "code_reviewer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "main.ts",
   "scripts": {
     "build": "tsc",
@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@octokit/rest": "^19.0.7",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",

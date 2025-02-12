@@ -1,22 +1,13 @@
 import { config } from 'dotenv'
-import { Configuration, OpenAIApi } from 'openai'
 import { Octokit } from '@octokit/rest'
 import parseDiff, { Chunk, File } from 'parse-diff'
 import minimatch from 'minimatch'
+import { AiTool } from './tools'
 
 config()
 
 const GITHUB_TOKEN: string = process.env.GITHUB_TOKEN!
-const OPENAI_API_KEY: string = process.env.OPENAI_API_KEY!
-const OPENAI_API_MODEL: string = process.env.OPENAI_API_MODEL!
-
 const octokit = new Octokit({ auth: GITHUB_TOKEN })
-
-const configuration = new Configuration({
-  apiKey: OPENAI_API_KEY
-})
-
-const openai = new OpenAIApi(configuration)
 
 interface PRDetails {
   owner: string
@@ -69,6 +60,7 @@ async function getDiff(
 }
 
 async function analyzeCode(
+  aitool: AiTool,
   parsedDiff: File[],
   prDetails: PRDetails
 ): Promise<Array<{ body: string; path: string; line: number }>> {
@@ -78,7 +70,7 @@ async function analyzeCode(
     if (file.to === '/dev/null') continue // Ignore deleted files
     for (const chunk of file.chunks) {
       const prompt = createPrompt(file, chunk, prDetails)
-      const aiResponse = await getAIResponse(prompt)
+      const aiResponse = await aitool.handlePrompt(prompt)
       if (aiResponse) {
         const newComments: Array<{ body: string; path: string; line: number }> =
           createComment(file, chunk, aiResponse)
@@ -124,38 +116,6 @@ ${chunk.changes
 `
 }
 
-async function getAIResponse(prompt: string): Promise<Array<{
-  lineNumber: string
-  reviewComment: string
-}> | null> {
-  const queryConfig = {
-    model: OPENAI_API_MODEL,
-    temperature: 0.2,
-    max_tokens: 700,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0
-  }
-
-  try {
-    const response = await openai.createChatCompletion({
-      ...queryConfig,
-      messages: [
-        {
-          role: 'system',
-          content: prompt
-        }
-      ]
-    })
-
-    const res = response.data.choices[0].message?.content?.trim() || '{}'
-    return JSON.parse(res)
-  } catch (error) {
-    console.error('Error:', error)
-    return null
-  }
-}
-
 function createComment(
   file: File,
   chunk: Chunk,
@@ -169,7 +129,7 @@ function createComment(
       return []
     }
     return {
-      body: '[GPT-REVIEW] ' + aiResponse.reviewComment,
+      body: '[AI-REVIEW] ' + aiResponse.reviewComment,
       path: file.to,
       line: Number(aiResponse.lineNumber)
     }
@@ -191,7 +151,7 @@ async function createReviewComment(
   })
 }
 
-export async function main(link: string) {
+export async function main(aitool: AiTool, link: string) {
   const prDetails = await getPRDetails(link)
 
   const diff = await getDiff(
@@ -207,13 +167,15 @@ export async function main(link: string) {
 
   const parsedDiff = parseDiff(diff)
 
-  const excludePatterns = 'yarn.lock,dist/**'.split(',').map((s) => s.trim())
+  const excludePatterns = 'package-lock.json,yarn.lock,dist/**'
+    .split(',')
+    .map((s) => s.trim())
 
   const filteredDiff = parsedDiff.filter((file) => {
     return !excludePatterns.some((pattern) => minimatch(file.to ?? '', pattern))
   })
 
-  const comments = await analyzeCode(filteredDiff, prDetails)
+  const comments = await analyzeCode(aitool, filteredDiff, prDetails)
 
   if (comments.length > 0) {
     await createReviewComment(
